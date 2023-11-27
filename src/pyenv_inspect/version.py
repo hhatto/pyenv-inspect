@@ -11,6 +11,9 @@ from .exceptions import VersionParseError
 VERSION_PATTERN = (
     r'(?P<base>\d(?:\.\d+){0,2})(?:(?P<pre>(?:a|b|rc)\d+)?|-(?P<dev>dev))')
 VERSION_REGEX = re.compile(VERSION_PATTERN)
+OPTIONAL_VERSION_PATTERN = (
+    r'(?P<base>\d(?:\.\d+){0,2})-(?P<optionalversion>\d(?:\.\d+){0,2})')
+OPTIONAL_VERSION_REGEX = re.compile(OPTIONAL_VERSION_PATTERN)
 
 
 class Readonly:
@@ -62,14 +65,17 @@ class Version:
         base: Tuple[int, ...],
         pre: Optional[Tuple[str, int]] = None,
         dev: bool = False,
+        opt: Optional[Tuple[int, ...]] = None,
     ) -> None:
         self._base = base
         self._pre = pre
         self._dev = dev
+        self._opt = opt
 
     base = Readonly()
     pre = Readonly()
     dev = Readonly()
+    opt = Readonly()
 
     @Cached
     def _base_short(self) -> Tuple:
@@ -107,16 +113,20 @@ class Version:
     def from_string_version(cls, string_version: str) -> Optional[Version]:
         match = VERSION_REGEX.fullmatch(string_version)
         if not match:
-            raise VersionParseError(string_version)
+            # fallback to pattern with optional version
+            match = OPTIONAL_VERSION_REGEX.fullmatch(string_version)
+            if not match:
+                raise VersionParseError(string_version)
         fields = match.groupdict()
         fields['base'] = tuple(map(int, fields['base'].split('.')))
-        pre = fields['pre']
+        pre = fields.get('pre')
         if pre:
             if pre.startswith('rc'):
                 fields['pre'] = ('rc', int(pre[2:]))
             else:
                 fields['pre'] = (pre[0], int(pre[1:]))
-        fields['dev'] = bool(fields['dev'])
+        if 'dev' in fields:
+            fields['dev'] = bool(fields['dev'])
         return cls(**fields)
 
     def __str__(self) -> str:

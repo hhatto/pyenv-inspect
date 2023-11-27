@@ -35,6 +35,8 @@ def find_pyenv_python_executable(spec: PyenvPythonSpec | str) -> Path | None:
         if version not in requested_version:
             continue
         log.debug('proposed %s', version)
+        if _spec.implementation != spec.implementation:
+            continue
         if not best_match_version or version > best_match_version:
             best_match_version = version
             best_match_dir = version_dir
