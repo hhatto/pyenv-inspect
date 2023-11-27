@@ -12,7 +12,7 @@ VERSION_PATTERN = (
     r'(?P<base>\d(?:\.\d+){0,2})(?:(?P<pre>(?:a|b|rc)\d+)?|-(?P<dev>dev))')
 VERSION_REGEX = re.compile(VERSION_PATTERN)
 OPTIONAL_VERSION_PATTERN = (
-    r'(?P<base>\d(?:\.\d+){0,2})-(?P<optionalversion>\d(?:\.\d+){0,2})')
+    r'(?P<base>\d(?:\.\d+){0,2})-(?P<opt>\d(?:\.\d+){0,2})')
 OPTIONAL_VERSION_REGEX = re.compile(OPTIONAL_VERSION_PATTERN)
 
 
@@ -127,6 +127,8 @@ class Version:
                 fields['pre'] = (pre[0], int(pre[1:]))
         if 'dev' in fields:
             fields['dev'] = bool(fields['dev'])
+        if 'opt' in fields:
+            fields['opt'] = tuple(map(int, fields['opt'].split('.')))
         return cls(**fields)
 
     def __str__(self) -> str:
